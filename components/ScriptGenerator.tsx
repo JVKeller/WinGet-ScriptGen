@@ -571,7 +571,7 @@ Stop-Transcript
               value={logPath}
               onChange={(e) => setLogPath(e.target.value)}
               className="w-full bg-slate-900 border border-slate-600 rounded-md px-3 py-2 text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
-              placeholder="e.g., C:\\temp\\logs"
+              placeholder="e.g., c:\ProgramData\TacticalRMM\logs"
             />
           </div>
           <div>
