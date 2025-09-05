@@ -7,9 +7,9 @@ const ScriptGenerator: React.FC = () => {
   const [logPath, setLogPath] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('wingetConfig_logPath');
-      return saved ? JSON.parse(saved) : 'C:\\temp\\winget-logs';
+      return saved ? JSON.parse(saved) : 'C:\\ProgramData\\TacticalRMM\\logs';
     } catch {
-      return 'C:\\temp\\winget-logs';
+      return 'C:\\ProgramData\\TacticalRMM\\logs';
     }
   });
   const [currentExclusionInput, setCurrentExclusionInput] = useState<string>('');
