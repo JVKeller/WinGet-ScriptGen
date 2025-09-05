@@ -1,0 +1,5 @@
+{
+  "name": "winget-scriptgen-for-trmm",
+  "description": "An interactive tool to generate a robust PowerShell script for silently updating PC applications via winget. Designed for deployment with TRMM systems.",
+  "requestFramePermissions": []
+}
