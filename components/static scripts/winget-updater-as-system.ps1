@@ -1,19 +1,34 @@
 # PowerShell Script for Silent Winget Updates via TRMM
-# Generated on: 2025-09-05T18:32:42.829Z
 # ----------------------------------------------------
 # This script is designed to run as SYSTEM. It will:
-# 1. Create a log file in the specified directory.
-# 2. Robustly locate the winget.exe executable.
+# 1. Create a log file in the tactical agent directory.
+# 2. Locate the winget.exe executable.
 # 3. Attempt to self-update winget to the latest version.
 # 4. Update winget sources.
-# 5. Fetch all available upgrades, filter out exclusions.
+# 5. Fetch all available upgrades, filter if exclusions.
 # 6. Upgrade remaining applications one-by-one.
 # 7. Log all output and a final summary report to a transcript file.
 # ----------------------------------------------------
+# Arguments: -ExcludeMicrosoft, -ForceUpgrade, -IncludeUnknown
+# ----------------------------------------------------
+# What doesn't work:
+# Upgrade that requite to be uninstalled before reinstalling. i.e. Major updagrade.
 
 # --- Configuration ---
 $LogPath = "C:\\ProgramData\\TacticalRMM\\logs"
 $LogFile = Join-Path $LogPath "winget-updates-$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').log"
+
+param (
+    # If specified, the script will NOT exclude common Microsoft products (like Edge, .NET, etc.).
+    [switch]$ExcludeMicrosoft,
+
+    # If specified, passes the '--force' argument to 'winget upgrade', which can help reinstall broken packages.
+    [switch]$ForceUpgrade,
+    
+    # If specified, passes the '--include-unknown' argument to 'winget upgrade'.
+    [switch]$IncludeUnknown
+)
+
 # --- End Configuration ---
 
 # Function to write messages to both console and transcript
@@ -114,7 +129,7 @@ try {
 
     try {
         # Attempt to parse a version string like 'v1.7.10911' or '1.8.0'
-        if ($wingetVersionString -match 'v?((?:\\d+\\.)*\\d+)') {
+        if ($wingetVersionString -match 'v?((?:\d+\.)*\d+)') {
             $versionString = $matches[1]
             # The [version] constructor can fail on versions with more than 4 parts (e.g., from dev builds).
             # We'll safely take up to the first 4 parts to prevent script errors.
@@ -158,7 +173,7 @@ try {
                  $versionOutput = & "$wingetPath" --version
                  $wingetVersionString = ($versionOutput | Out-String).Trim()
                  try {
-                    if ($wingetVersionString -match 'v?((?:\\d+\\.)*\\d+)') {
+                    if ($wingetVersionString -match 'v?((?:\d+\.)*\d+)') {
                         $versionString = $matches[1]
                         # The [version] constructor can fail on versions with more than 4 parts (e.g., from dev builds).
                         # We'll safely take up to the first 4 parts to prevent script errors.
@@ -241,7 +256,7 @@ try {
             Write-Log "WARN: Could not determine column layout from winget output header. This can happen if there are no packages to upgrade or the output format changed. Falling back to less reliable parsing."
             $upgradablePackageIds = foreach ($line in $packageLines) {
                 # Fallback: Split by 2+ spaces and assume ID is the second column. This is not always reliable.
-                $columns = $line.Trim() -split '\\s{2,}'
+                $columns = $line.Trim() -split '\s{2,}'
                 if ($columns.Count -ge 2) { $columns[1].Trim() }
             }
         } else {
@@ -261,29 +276,27 @@ try {
         Write-Log "INFO: Found $($upgradablePackageIds.Count) potential updates. Applying exclusions..."
         
         # --- Define Exclusions ---
-        # Manual exclusions are standardized to lowercase for reliable, case-insensitive matching.
-        $manualExclusions = @(
-
-        )
-        
-        $msExclusionPatterns = @(
-        "Microsoft.Edge.*",
-        "Microsoft.Edge",
-        "Microsoft.Teams.*",
-        "Microsoft.Office.*",
-        "Microsoft.365.*",
-        "Microsoft.OneDrive",
-        "Microsoft.Skype",
-        "Microsoft.VCRedist.*",
-        "Microsoft.VisualStudio.*",
-        "Microsoft.WindowsTerminal",
-        "Microsoft.PowerShell.*",
-        "Microsoft.PowerToys",
-        "Microsoft.DotNet.*",
-        "Microsoft.NET.*",
-        "Microsoft.WindowsSDK",
-        "Microsoft.WindowsAppRuntime.*"
-        )
+        $msExclusionPatterns = @()
+        if ($ExcludeMicrosoft) {
+            $msExclusionPatterns = @(
+                "Microsoft.Edge.*",
+                "Microsoft.Edge",
+                "Microsoft.Teams.*",
+                "Microsoft.Office.*",
+                "Microsoft.365.*",
+                "Microsoft.OneDrive",
+                "Microsoft.Skype",
+                "Microsoft.VCRedist.*",
+                "Microsoft.VisualStudio.*",
+                "Microsoft.WindowsTerminal",
+                "Microsoft.PowerShell.*",
+                "Microsoft.PowerToys",
+                "Microsoft.DotNet.*",
+                "Microsoft.NET.*",
+                "Microsoft.WindowsSDK",
+                "Microsoft.WindowsAppRuntime.*"
+            )
+        }
         # --- End Exclusions ---
         
         $packagesToUpgrade = @()
@@ -335,14 +348,18 @@ try {
                 # The --disable-interactivity flag is crucial for TRMM but was added in winget v1.3.
                 # Conditionally add it to maintain backward compatibility.
                 if ($wingetVersion -ge [version]"1.3.0") {
-                    $arguments += "--disable-interactivity"
+                    $arguments += "-interactive"
                 } else {
-                    Write-Log "INFO: Skipping --disable-interactivity for older winget version $wingetVersion."
+                    Write-Log "INFO: Skipping -interactive for older winget version $wingetVersion."
                 }
                 
                 # Add optional arguments
-                $arguments += "--include-unknown"
-                $arguments += "--force"
+                if ($IncludeUnknown) {
+                    $arguments += "--include-unknown"
+                }
+                if ($ForceUpgrade) {
+                    $arguments += "--force"
+                }
                 
                 Write-Log "Executing Command: & '$($wingetPath.Replace("'", "''"))' $($arguments -join ' ')"
                 & "$wingetPath" $arguments
