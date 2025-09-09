@@ -9,7 +9,7 @@
 # 6. Upgrade remaining applications one-by-one.
 # 7. Log all output and a final summary report to a transcript file.
 # ----------------------------------------------------
-# Arguments: -ExcludeMicrosoft, -ForceUpgrade, -IncludeUnknown, -AdditionalExclusions
+# Arguments: "-ExcludeMicrosoft", "-ForceUpgrade", "-IncludeUnknown", "-AdditionalExclusions inkscape.inscape"
 # ----------------------------------------------------
 # What doesn't work:
 # Upgrade that requite to be uninstalled before reinstalling. i.e. Major updagrade.
@@ -382,6 +382,14 @@ try {
             Write-Log "=================================================="
             Write-Log "               Upgrade Summary Report"
             Write-Log "=================================================="
+            Write-Log ""
+
+            Write-Log "PACKAGES WITH UPGRADES:"
+            if ($upgradablePackageIds.Count -gt 0) {
+                foreach ($packageId in $upgradablePackageIds) {
+                    Write-Log "  - $packageId"
+                }
+            }
             Write-Log ""
 
             if ($successfullyUpgraded.Count -gt 0) {
