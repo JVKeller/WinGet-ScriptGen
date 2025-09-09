@@ -1,22 +1,23 @@
-# PowerShell Script for Silent Winget Updates via TRMM
-# ----------------------------------------------------
-# This script is designed to run as SYSTEM. It will:
-# 1. Create a log file in the tactical agent directory.
-# 2. Locate the winget.exe executable.
-# 3. Attempt to self-update winget to the latest version.
-# 4. Update winget sources.
-# 5. Fetch all available upgrades, filter exclusions.
-# 6. Upgrade remaining applications one-by-one.
-# 7. Log all output and a final summary report to a transcript file.
-# ----------------------------------------------------
-# Arguments: 
+#  PowerShell Script for Silent Winget Updates via TRMM
+#  by rellek (JVKeller)
+#  ----------------------------------------------------
+#  This script is designed to run as SYSTEM. It will:
+#  1. Create a log file in the tactical agent directory.
+#  2. Locate the winget.exe executable.
+#  3. Attempt to self-update winget to the latest version.
+#  4. Update winget sources.
+#  5. Fetch all available upgrades, filter exclusions.
+#  6. Upgrade remaining applications one-by-one.
+#  7. Log all output and a final summary report to a transcript file.
+#  ----------------------------------------------------
+#  Arguments: 
 #       -ExcludeMicrosoft
 #       -ForceUpgrade
 #       -IncludeUnknown
 #       -Exclusions inkscape.inscape, mozilla.firefox
-# ----------------------------------------------------
-# What doesn't work:
-# Upgrade that requite to be uninstalled before reinstalling. i.e. Major updagrade.
+#  ----------------------------------------------------
+#  What doesn't work:
+#  Upgrade that requite to be uninstalled before reinstalling. i.e. Major updagrade.
 
 param (
     # If specified, the script will exclude common Microsoft products (like Edge, .NET, etc.).
