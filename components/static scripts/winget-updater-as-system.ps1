@@ -5,11 +5,15 @@
 # 2. Locate the winget.exe executable.
 # 3. Attempt to self-update winget to the latest version.
 # 4. Update winget sources.
-# 5. Fetch all available upgrades, filter if exclusions.
+# 5. Fetch all available upgrades, filter exclusions.
 # 6. Upgrade remaining applications one-by-one.
 # 7. Log all output and a final summary report to a transcript file.
 # ----------------------------------------------------
-# Arguments: "-ExcludeMicrosoft", "-ForceUpgrade", "-IncludeUnknown", "-AdditionalExclusions inkscape.inscape"
+# Arguments: 
+#       -ExcludeMicrosoft
+#       -ForceUpgrade
+#       -IncludeUnknown
+#       -Exclusions inkscape.inscape, mozilla.firefox
 # ----------------------------------------------------
 # What doesn't work:
 # Upgrade that requite to be uninstalled before reinstalling. i.e. Major updagrade.
@@ -25,7 +29,7 @@ param (
     [switch]$IncludeUnknown,
 
     # A comma-separated list of package IDs to exclude from updates.
-    [string[]]$AdditionalExclusions = @()
+    [string[]]$Exclusions = @()
 )
 
 
@@ -280,7 +284,7 @@ try {
         Write-Log "INFO: Found $($upgradablePackageIds.Count) potential updates. Applying exclusions..."
         
         # --- Define Exclusions ---
-        $manualExclusions = $AdditionalExclusions | ForEach-Object { $_.ToLower() }
+        $manualExclusions = $Exclusions | ForEach-Object { $_.ToLower() }
 
         $msExclusionPatterns = @()
         if ($ExcludeMicrosoft) {
