@@ -33,8 +33,6 @@ param (
     [string[]]$Exclusions = @()
 )
 
-
-
 # --- Configuration ---
 $LogPath = "C:\\ProgramData\\TacticalRMM\\logs"
 $LogFile = Join-Path $LogPath "winget-updates-$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').log"
@@ -49,7 +47,7 @@ function Write-Log {
     Write-Host $Message
 }
 
-# Function to robustly find the winget executable
+# Function to find the winget executable
 function Find-WingetExe {
     Write-Log "INFO: Attempting to locate winget.exe..."
     
@@ -91,9 +89,6 @@ function Find-WingetExe {
     return $null
 }
 
-
-# --- Script Body ---
-
 # Ensure the log directory exists
 if (-not (Test-Path $LogPath -PathType Container)) {
     try {
@@ -105,7 +100,7 @@ if (-not (Test-Path $LogPath -PathType Container)) {
     }
 }
 
-# Start logging all output to the specified file
+# Start writing all output to the log file
 try {
     Start-Transcript -Path $LogFile -ErrorAction Stop
 } catch {
@@ -156,7 +151,7 @@ try {
 
     Write-Log "[STEP 2/4] Attempting to upgrade winget client..."
     try {
-        # We specifically use the 'msstore' source as it's the official channel for the App Installer/winget.
+        # Specifically use the 'msstore' source as it's the official channel for the App Installer/winget.
         & "$wingetPath" upgrade Microsoft.DesktopAppInstaller --source msstore --accept-package-agreements --silent
         $exitCode = $LASTEXITCODE
         
@@ -185,7 +180,7 @@ try {
                     if ($wingetVersionString -match 'v?((?:\\d+\\.)*\\d+)') {
                         $versionString = $matches[1]
                         # The [version] constructor can fail on versions with more than 4 parts (e.g., from dev builds).
-                        # We'll safely take up to the first 4 parts to prevent script errors.
+                        # Safely take up to the first 4 parts to prevent script errors.
                         $safeVersionString = ($versionString.Split('.')[0..3]) -join '.'
                         $wingetVersion = [version]$safeVersionString
                     } else {
@@ -212,21 +207,21 @@ try {
 
     Write-Log "[STEP 4/4] Searching for and applying application updates..."
 
-    # Get the list of upgradable packages. We accept source agreements here to prevent prompts.
+    # Get the list of upgradable packages. Accept source agreements to prevent prompts.
     Write-Log "INFO: Fetching list of available upgrades..."
     $upgradeOutput = & "$wingetPath" upgrade --accept-source-agreements
     
     if ($LASTEXITCODE -ne 0) {
         $outputStringForCheck = $upgradeOutput | Out-String
         # Some winget versions exit with a non-zero code when no updates are found.
-        # We check the output to distinguish this from a genuine error.
+        # Check the output to distinguish this from a genuine error.
         if ($outputStringForCheck -notmatch "No applicable update found" -and $outputStringForCheck -notmatch "No installed package found matching input criteria") {
             Write-Log "ERROR: 'winget upgrade' command failed with exit code $LASTEXITCODE. Cannot retrieve list of upgradable packages."
             Write-Log "This can happen if winget needs an update itself or if there's a problem with its sources."
             Write-Log "Winget output: $outputStringForCheck"
             throw "Winget upgrade list failed."
         }
-        # If it was a "no updates found" error, we just log it and proceed. The parser will correctly find 0 packages.
+        # If a "no updates found" error, log it and proceed. The parser will correctly find 0 packages.
         Write-Log "INFO: 'winget upgrade' returned a non-zero exit code but the output indicates no updates are available. This is normal for some versions. Continuing..."
     }
     
@@ -256,7 +251,7 @@ try {
 
     if ($packageLines.Count -gt 0) {
         # Determine column positions based on the header line text to parse reliably
-        # We search for " Id " with spaces to avoid matching 'Id' in a package name like 'Rapid'.
+        # Search for " Id " with spaces to avoid matching 'Id' in a package name like 'Mozilla'.
         $idColStart = $headerLine.IndexOf(' Id ')
         $versionColStart = $headerLine.IndexOf(' Version ')
 
@@ -287,6 +282,7 @@ try {
         # --- Define Exclusions ---
         $manualExclusions = $Exclusions | ForEach-Object { $_.ToLower() }
 
+        # --- Basic Microsoft (or any other hard coded) Exclusions ---
         $msExclusionPatterns = @()
         if ($ExcludeMicrosoft) {
             $msExclusionPatterns = @(
